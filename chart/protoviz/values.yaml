@@ -1,0 +1,15 @@
+image:
+  repository: ghcr.io/sasakipochi/protoviz
+  tag: ""          # 空なら appVersion
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+ingress:
+  enabled: true
+  className: traefik
+  host: protoviz.localhost
+
+resources:
+  requests: { cpu: 5m, memory: 16Mi }
+  limits: { memory: 64Mi }

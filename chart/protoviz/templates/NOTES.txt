@@ -1,0 +1,6 @@
+ProtoViz をデプロイしました。
+{{- if .Values.ingress.enabled }}
+  http://{{ .Values.ingress.host }}/
+{{- else }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }} 8080:80  →  http://localhost:8080/
+{{- end }}

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProtoViz</title>
+<meta name="description" content="IPsec・Kerberos・Tailscale・BGP・IPv6 RA などのプロトコルの動きを、パケット単位・バイト単位で見せる説明用アプリ">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Ccircle cx='9' cy='16' r='4' fill='white'/%3E%3Ccircle cx='23' cy='16' r='4' fill='white'/%3E%3Cpath d='M13 16h6' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E">
+<script>
+  try {
+    const t = localStorage.getItem('protoviz:theme');
+    document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  } catch (e) { document.documentElement.dataset.theme = 'light'; }
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <button id="btn-menu" class="icon-btn" aria-label="メニュー">☰</button>
+  <div class="brand"><b>ProtoViz</b><span>プロトコルの動きを、パケット1つずつ見る</span></div>
+  <button id="btn-theme" class="icon-btn" aria-label="ライト/ダーク切り替え">◐</button>
+</header>
+<div class="layout">
+  <nav id="nav" aria-label="プロトコル一覧"></nav>
+  <main>
+    <section class="proto-head">
+      <div><span id="p-layer" class="layer-chip"></span><h1><span id="p-name"></span> <small id="p-title"></small></h1></div>
+      <div id="legend"></div>
+    </section>
+    <section class="stage">
+      <div class="topo-wrap"><svg id="topo" role="img" aria-label="ネットワーク構成図"></svg></div>
+      <div id="panel"></div>
+    </section>
+    <section class="controls">
+      <button id="btn-prev">← 前へ</button>
+      <div id="dots"></div>
+      <button id="btn-next" class="primary">次へ →</button>
+      <span class="spacer"></span>
+      <button id="btn-replay" title="スペースキーでも再生">↻ このステップを再生</button>
+      <button id="btn-auto">▶ 通しで再生</button>
+      <label class="speed">速さ <select id="speed"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">速い</option></select></label>
+    </section>
+    <section class="bottom">
+      <div class="card seq-card"><div class="card-title">シーケンス図 <span class="muted">(矢印を押すと中身を表示)</span></div><div class="seq-scroll"><svg id="seq"></svg></div></div>
+      <div class="card"><div class="card-title">パケットの中身</div><div id="inspector"></div></div>
+    </section>
+    <footer>アドレスはすべて文書用の予約範囲 (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24, 2001:db8::/32 など)。暗号文・鍵・乱数はそれらしく作った値です。長さとチェックサムは実際に計算しています。</footer>
+  </main>
+</div>
+<script src="js/bytes.js"></script>
+<script src="js/protocols/ra.js"></script>
+<script src="js/protocols/ipsec.js"></script>
+<script src="js/protocols/tailscale.js"></script>
+<script src="js/protocols/kerberos.js"></script>
+<script src="js/protocols/bgp.js"></script>
+<script src="js/engine.js"></script>
+</body>
+</html>
