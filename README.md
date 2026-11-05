@@ -3,6 +3,8 @@
 プロトコルの動きを「ステップごとのパケットの移動」「シーケンス図」「パケットのバイト単位の中身」で見せる、人に説明するための Web アプリ。
 [Protocol Explorer](https://protocol-explorer-alpha.vercel.app/) に着想を得て、IPsec・Kerberos・Tailscale・BGP・IPv6 RA を日本語で作ったもの (コードは独自)。
 
+**デモ: https://sasakipochi.github.io/protoviz/**
+
 ![Tailscale の NAT 越えのステップ](docs/screenshot.png)
 
 ## 収録しているプロトコル
@@ -54,6 +56,7 @@ make          # 検証 → イメージ build/push (REGISTRY, 既定 localhost:5
 
 リリース: `chart/protoviz/Chart.yaml` の version / appVersion を上げてコミットし、同じ番号の `v*` タグを push すると、
 GitHub Actions がイメージとチャートを ghcr.io に公開する。
+デモサイト (GitHub Pages) は main に push すると `site/` の内容で自動更新される。
 
 ## プロトコルを追加するには
 
