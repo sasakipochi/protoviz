@@ -11,6 +11,8 @@ const svg = (tag, attrs = {}, text) => {
   if (text !== undefined) el.textContent = text;
   return el;
 };
+// 空行で段落、1 つの改行は <br>
+const paras = (t) => String(t || '').split('\n\n').filter(Boolean).map((x) => `<p>${esc(x).replace(/\n/g, '<br>')}</p>`).join('');
 const toArr = (x) => (Array.isArray(x) ? x : [x]);
 const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 
@@ -222,7 +224,7 @@ function renderPanel(p) {
     el.innerHTML = `
       <div class="eyebrow">まとめ</div>
       <h2>${esc(o.title)}</h2>
-      ${o.text.split('\n\n').map((t) => `<p>${esc(t)}</p>`).join('')}
+      ${paras(o.text)}
       ${o.points ? `<ul class="points">${o.points.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       ${o.next ? `<p class="muted">${esc(o.next)}</p>` : ''}`;
     return;
@@ -232,7 +234,7 @@ function renderPanel(p) {
     <div class="eyebrow">ステップ ${st.step + 1} / ${n}</div>
     <h2>${esc(s.title)}</h2>
     <p class="lead">${esc(s.desc)}</p>
-    ${(s.detail || '').split('\n\n').filter(Boolean).map((t) => `<p>${esc(t)}</p>`).join('')}
+    ${paras(s.detail)}
     ${factsTable(s.facts)}
     <div class="chips">${s.events.map((ev) => `<button class="chip c-${ev.color}" data-ev="${ev._id}">${ev.kind === 'local' ? '⚙ ' : ''}${esc(ev.label)}</button>`).join('')}</div>`;
   el.querySelectorAll('.chip').forEach((b) => (b.onclick = () => select(p.evById[b.dataset.ev])));
@@ -330,7 +332,7 @@ function renderInspector() {
   if (ev.kind === 'local') {
     el.innerHTML = `<div class="ins-head"><span class="sw c-${ev.color}"></span><b>${esc(ev.label)}</b></div>
       <div class="ins-route">${esc(names(ev.from))} の中での処理 (パケットは流れません)</div>
-      ${(ev.text || '').split('\n\n').map((t) => `<p>${esc(t)}</p>`).join('')}`;
+      ${paras(ev.text)}`;
     return;
   }
   const pk = ev.packet;

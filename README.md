@@ -1,7 +1,7 @@
 # ProtoViz
 
 プロトコルの動きを「ステップごとのパケットの移動」「シーケンス図」「パケットのバイト単位の中身」で見せる、人に説明するための Web アプリ。
-[Protocol Explorer](https://protocol-explorer-alpha.vercel.app/) に着想を得て、IPsec・Kerberos・Tailscale・BGP・IPv6 RA を日本語で作ったもの (コードは独自)。
+[Protocol Explorer](https://protocol-explorer-alpha.vercel.app/) に着想を得て、ARP・DHCP・IPv6 (ND, RA, DHCPv6)・IPsec・BGP・Tailscale・Kerberos・DoH・NTP などを日本語で作ったもの (コードは独自)。
 
 **デモ: https://sasakipochi.github.io/protoviz/**
 
@@ -11,11 +11,18 @@
 
 | ID | 内容 | ステップ |
 |---|---|---|
+| `arp` | ARP (経路表 → 要求 → 応答 → 通信 → Probe/Gratuitous ARP → ARP スプーフィング) | 6 |
+| `rarp` | RARP (ディスクレス WS が IP を尋ねる → 表を引いて応答 → TFTP → なぜ廃れたか) | 5 |
+| `nd` | IPv6 近隣探索 (要請ノードマルチキャスト → NS → NA → NUD → DAD で重複検出) | 5 |
 | `ra` | IPv6 RA / SLAAC (DAD → RS → RA → アドレス生成 → 通信) | 5 |
+| `dhcp` | DHCP (Discover → Offer → Request → Ack → Renew) | 5 |
+| `dhcpv6` | DHCPv6 (RA の M フラグ → Solicit/Advertise/Request/Reply をリレー経由で) | 5 |
 | `ipsec` | IPsec 拠点間 VPN (IKE_SA_INIT → IKE_AUTH → ESP → DPD) | 8 |
+| `bgp` | BGP (TCP → OPEN → KEEPALIVE → UPDATE → 伝播 → 転送 → 取り下げ) | 7 |
 | `tailscale` | Tailscale (登録 → ネットマップ → STUN → DERP 経由 → disco で NAT 越え → 直接 WireGuard) | 7 |
 | `kerberos` | Kerberos (PREAUTH_REQUIRED → AS → TGS → AP-REQ/AP-REP over HTTP Negotiate) | 5 |
-| `bgp` | BGP (TCP → OPEN → KEEPALIVE → UPDATE → 伝播 → 転送 → 取り下げ) | 7 |
+| `doh` | DoH (平文の DNS と比較 → TCP → TLS 1.3 → HTTP/2 POST /dns-query → 応答) | 6 |
+| `ntp` | NTP (stratum の階層 → T1〜T4 → オフセットとディレイの計算 → slew) | 5 |
 
 URL でプロトコルとステップを直接開ける: `http://protoviz.localhost/#/kerberos/2` (ステップは 0 始まり)。
 キーボード: ← → でステップ移動、スペースで再生。
@@ -69,6 +76,9 @@ GitHub Actions がイメージとチャートを ghcr.io に公開する。
 - `steps[].state` — ノードの下に出す状態表示 (ステップを進めると積み上がる)
 - パケットは `PV.pkt(要約)` に `PV.h.ipv4()` などで層を積み、`.u8/.u16/.u32/.f/.str/.blob` でフィールドを足す。
   `{ decoded: true }` の層は「復号・デコードした中身」として回線上のバイト列とは別に表示される
+- 長さ付きの入れ子 (TLS の拡張、DHCP/DHCPv6 のオプションなど) は `PV.tlv.node(名前, 先頭バイト, 長さのバイト数, 子)` で組むと長さが自動で入る。
+  ASN.1 DER は `PV.der`、DNS の名前は `PV.dnsName()`、ARP/RARP は `PV.h.arp()`
+- `make check` がすべてのパケットの長さ・チェックサム・入れ子の構造を Python で検証する (`tools/verify_packets.py`)
 
 アドレスは文書用の予約範囲を使い、暗号文・鍵は `PV.rand(seed, n)` で決定的に作った値。
 

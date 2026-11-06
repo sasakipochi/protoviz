@@ -113,7 +113,7 @@ class Pkt {
 PV.pkt = (summary, opts) => new Pkt(summary, opts);
 
 /* ---------- よく使うヘッダ ---------- */
-const ETYPE = { 0x0800: 'IPv4', 0x86dd: 'IPv6', 0x0806: 'ARP' };
+const ETYPE = { 0x0800: 'IPv4', 0x86dd: 'IPv6', 0x0806: 'ARP', 0x8035: 'RARP' };
 const IPPROTO = { 1: 'ICMP', 6: 'TCP', 17: 'UDP', 50: 'ESP', 58: 'ICMPv6' };
 
 function pseudoSum(c, proto) {
@@ -242,3 +242,41 @@ PV.der = D;
 PV.ev = (from, to, color, label, packet, opts = {}) => ({ kind: 'pkt', from, to, color, label, packet: packet && packet.done(), ...opts });
 // local: ノード内での処理 (鍵の計算、経路選択など)
 PV.local = (node, label, text, opts = {}) => ({ kind: 'local', from: node, to: node, color: 'gray', label, text, ...opts });
+
+/* ---------- 長さ付きの入れ子構造 (TLS 拡張、DHCP オプションなど) ---------- */
+// node(name, head, lenSize, kids): head のバイト → 中身の長さ (lenSize バイト) → kids
+// leaf(name, bytes, value, desc): ただのフィールド
+const T = {
+  leaf: (name, bytes, value, desc) => ({ leaf: true, name, bytes: [...bytes], value, desc }),
+  node: (name, head, lenSize, kids, { value, desc } = {}) => ({ name, head: [...head], lenSize, kids, value, desc }),
+};
+T.content = (n) => (n.leaf ? n.bytes : n.kids.flatMap(T.enc));
+T.hdr = (n) => [...n.head, ...be(T.content(n).length, n.lenSize)];
+T.enc = (n) => (n.leaf ? n.bytes : [...T.hdr(n), ...T.content(n)]);
+T.emit = (p, n, depth = 0) => {
+  if (n.leaf) return p.f(n.name, n.bytes, n.value ?? (n.bytes.length ? hex(n.bytes) : ''), n.desc, { depth });
+  const len = T.content(n).length;
+  p.f(n.name, T.hdr(n), (n.value ? n.value + ' / ' : '') + `長さ ${len}`, n.desc, { depth });
+  n.kids.forEach((k) => T.emit(p, k, depth + 1));
+  return p;
+};
+PV.tlv = T;
+// DNS 形式の名前 (ラベルの長さ + 文字列 ... + 0)
+PV.dnsName = (s) => [...s.split('.').filter(Boolean).flatMap((l) => [l.length, ...ascii(l)]), 0];
+
+// ARP / RARP の本体 (28 バイト) と、Ethernet の最小長 60 バイトにそろえるパディング
+const ARPOP = { 1: 'ARP 要求', 2: 'ARP 応答', 3: 'RARP 要求', 4: 'RARP 応答' };
+PV.h.arp = (p, { op, sha, spa, tha, tpa, name, notes = {} }) => {
+  p.layer(name || (op <= 2 ? 'ARP' : 'RARP'))
+    .u16('ハードウェア種別', 1, '1 (Ethernet)', '下の層の種類')
+    .u16('プロトコル種別', 0x0800, '0x0800 (IPv4)', '調べたいアドレスの種類。EtherType と同じ番号を使う')
+    .u8('ハードウェアアドレス長', 6, '6', 'MAC アドレスは 6 バイト')
+    .u8('プロトコルアドレス長', 4, '4', 'IPv4 アドレスは 4 バイト')
+    .u16('オペレーション', op, `${op} (${ARPOP[op]})`, notes.op)
+    .f('送信元 MAC', mac(sha), sha, notes.sha)
+    .f('送信元 IP', ip4(spa), spa, notes.spa)
+    .f('ターゲット MAC', mac(tha), tha, notes.tha)
+    .f('ターゲット IP', ip4(tpa), tpa, notes.tpa);
+  return p.layer('パディング', { meta: { basic: true } })
+    .f('パディング', Array(18).fill(0), '00 × 18', 'Ethernet フレームは最低 60 バイト (FCS を除く)。ARP は 14 + 28 = 42 バイトしかないので 0 で埋める');
+};

@@ -2,5 +2,5 @@ apiVersion: v2
 name: protoviz
 description: プロトコルの動きをパケット単位で見せる説明用 Web アプリ
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.2.0
+appVersion: "0.2.0"

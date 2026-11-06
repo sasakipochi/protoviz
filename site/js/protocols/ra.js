@@ -34,7 +34,7 @@ function dadNS(target, sol, solMac, seed) {
 }
 
 PV.register({
-  id: 'ra', name: 'IPv6 RA / SLAAC', title: 'IPv6 アドレスの自動設定', group: 'ネットワーク層', layerLabel: 'L3 · ICMPv6 / NDP',
+  id: 'ra', name: 'IPv6 RA / SLAAC', title: 'IPv6 アドレスの自動設定', group: 'LAN の中', layerLabel: 'L3 · ICMPv6 / NDP',
   overview: {
     full: 'Router Advertisement と SLAAC (ステートレスアドレス自動設定)',
     description: 'IPv6 では、LAN につないだ PC がルータからの「広告 (RA)」を聞いて、自分でアドレスを組み立てます。DHCP サーバがなくても、プレフィックス (アドレスの前半 64 ビット) と既定のゲートウェイ、DNS サーバが分かる仕組みです。RA は ICMPv6 の一種で、近隣探索プロトコル (NDP) の一部です。',
